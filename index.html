@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Schita</title>
+<link rel="manifest" href="pwa/manifest.webmanifest">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151214" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+/* ===== Schita v1.0.0 — design tokens (CONTRACT §6) ===== */
+:root{
+  --bg:#FFF9FB; --paper:#FFFFFF; --ink:#1C1719; --ink-2:#4A4246;
+  --pencil:#A8A0A4; --guide:#CFC7CB; --line:#EDE4E8;
+  --accent:#D6336C; --accent-ink:#FFFFFF; --accent-soft:#FCE4EE; --accent-deep:#A61E4D;
+  --shadow:rgba(28,23,25,.14);
+  --old:var(--pencil);
+  --old:color-mix(in srgb,var(--ink) 55%,var(--paper));
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --display:ui-rounded,"SF Pro Rounded","Nunito","Varela Round","Segoe UI",Roboto,system-ui,sans-serif;
+  --body:system-ui,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --r-card:14px 18px 16px 20px / 18px 14px 20px 16px;
+  --r-btn:12px 16px 13px 17px / 16px 12px 17px 13px;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .38 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#151214; --paper:#1F1A1D; --ink:#F6F0F3; --ink-2:#C9BFC4; --pencil:#7A7075; --guide:#4D4449;
+    --line:#2E272B; --accent:#FF6FA3; --accent-ink:#1C1719; --accent-soft:#3A2230; --accent-deep:#FF9DC0;
+    --shadow:rgba(0,0,0,.5); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151214; --paper:#1F1A1D; --ink:#F6F0F3; --ink-2:#C9BFC4; --pencil:#7A7075; --guide:#4D4449;
+  --line:#2E272B; --accent:#FF6FA3; --accent-ink:#1C1719; --accent-soft:#3A2230; --accent-deep:#FF9DC0;
+  --shadow:rgba(0,0,0,.5); color-scheme:dark;
+}
+
+/* ===== base ===== */
+*{box-sizing:border-box}
+html{font-size:18px;-webkit-text-size-adjust:100%}
+body{margin:0;min-width:0;overflow-x:hidden;background:var(--bg) var(--grain);color:var(--ink);
+  font-family:var(--body);line-height:1.45;-webkit-tap-highlight-color:transparent}
+body.lock{overflow:hidden}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:.01em;margin:0;line-height:1.15}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+#app{outline:none}
+[hidden]{display:none!important}
+.ico{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.screen{animation:fadein .2s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.screen{animation:none}*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ===== buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 22px;
+  background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--r-btn);
+  font-family:var(--display);font-weight:800;font-size:1.05rem;text-decoration:none;
+  box-shadow:3px 3px 0 var(--shadow);transition:transform .15s,box-shadow .15s,background .15s}
+.btn:hover{background:var(--accent-soft)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent-deep)}
+.btn.primary:hover{background:var(--accent);filter:brightness(1.06)}
+.btn.big{min-height:64px;font-size:1.2rem}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:.45;cursor:default;box-shadow:none;transform:none}
+.btn.small{min-height:48px;padding:0 16px;font-size:.95rem}
+.iconbtn{display:inline-grid;place-items:center;width:56px;height:56px;background:transparent;border:2px solid transparent;
+  border-radius:50%;transition:background .15s}
+.iconbtn:hover{background:var(--accent-soft)}
+
+/* ===== cards ===== */
+.card{background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--r-card);box-shadow:3px 4px 0 var(--shadow)}
+.wrap{max-width:1040px;margin:0 auto;padding:calc(14px + var(--sat)) max(16px,var(--sar)) calc(40px + var(--sab)) max(16px,var(--sal))}
+
+/* ===== home ===== */
+.h-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:2rem;position:relative;padding-bottom:10px}
+.brand h1 svg.ul{position:absolute;left:0;bottom:0;width:100%;height:10px;overflow:visible;fill:none;stroke:var(--accent);stroke-width:3.5;stroke-linecap:round}
+.logo{width:42px;height:42px}
+.greet{display:flex;align-items:center;gap:10px;margin:18px 0 14px;font-family:var(--display);font-weight:800;font-size:1.5rem}
+.greet .ico{width:30px;height:30px;color:var(--accent);stroke-width:2}
+.cont{display:flex;gap:16px;padding:14px;align-items:center;margin-bottom:16px}
+.cont .thumb{width:112px;flex:none;border:1.5px solid var(--line);border-radius:10px 14px 11px 15px/14px 10px 15px 11px}
+.cont .txt{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.cont h2{font-size:1.25rem;overflow-wrap:anywhere}
+.muted{color:var(--ink-2);font-size:.9rem}
+.prog{margin:10px 0 22px}
+.prog p{margin:0 0 6px;font-weight:600}
+.pbar{height:8px;border-radius:5px;background:var(--line);box-shadow:inset 0 0 0 1px var(--guide);overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--accent);border-radius:5px;transition:width .3s}
+.cat{margin:26px 0 12px;font-size:1.3rem;display:flex;align-items:center;gap:10px}
+.cat::after{content:"";flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--guide) 0 8px,transparent 8px 14px)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (min-width:600px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.lcard{position:relative;display:flex;flex-direction:column;text-decoration:none;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.lcard:hover{transform:translate(-1px,-2px);box-shadow:4px 6px 0 var(--shadow)}
+.thumb{aspect-ratio:1;background:var(--paper);display:block}
+.thumb svg{display:block;width:100%;height:100%}
+.lcard .thumb{border-bottom:1.5px solid var(--line)}
+.lcard .body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.lcard h3{font-size:1.05rem;overflow-wrap:anywhere}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:.85rem;color:var(--ink-2)}
+.pencils{display:inline-flex;gap:1px}
+.pencils .ico{width:18px;height:18px;stroke-width:1.8;opacity:.35}
+.pencils .ico.on{opacity:1;fill:var(--accent-soft);color:var(--accent-deep)}
+.badge{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;padding:3px 9px 3px 6px;
+  background:var(--accent);color:var(--accent-ink);border-radius:20px;font-size:.78rem;font-weight:800}
+.badge .ico{width:14px;height:14px;stroke-width:3}
+.shelf{display:flex;flex-wrap:wrap;gap:14px}
+.frame{display:block;width:92px;padding:6px;background:var(--paper);border:1.5px solid var(--ink);
+  box-shadow:inset 0 0 0 3px var(--paper),inset 0 0 0 4px var(--guide),2px 3px 0 var(--shadow);text-decoration:none}
+.frame .thumb{aspect-ratio:1}
+.empty{padding:18px;color:var(--ink-2);display:flex;gap:12px;align-items:center}
+.empty .ico{color:var(--accent);width:32px;height:32px}
+.aicard{display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:16px;width:100%;text-align:left;background:var(--accent-soft)}
+
+/* ===== player ===== */
+.player{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;max-width:1100px;margin:0 auto;
+  padding:calc(8px + var(--sat)) max(14px,var(--sar)) 0 max(14px,var(--sal))}
+.p-top{display:flex;align-items:center;gap:8px}
+.p-title{flex:1;min-width:0}
+.p-title h1{font-size:1.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-title .muted{font-weight:700}
+.segs{display:flex;gap:4px;margin:4px 0 2px}
+.seg{flex:1;height:8px;border-radius:4px;background:var(--line);box-shadow:inset 0 0 0 1px var(--guide);transition:background .2s}
+.seg.done{background:var(--ink);box-shadow:none}
+.seg.cur{background:var(--accent);box-shadow:none}
+.p-main{flex:1;display:flex;flex-direction:column;gap:12px;padding-top:10px}
+.p-stage{display:flex;justify-content:center}
+.panel{position:relative;width:min(100%,max(260px,calc(100vh - 400px)));width:min(100%,max(260px,calc(100dvh - 400px)));
+  aspect-ratio:1;background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--r-card);
+  box-shadow:3px 4px 0 var(--shadow);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.panel.zoomed{cursor:grab}
+.panel svg{display:block;width:100%;height:100%}
+.zreset{position:absolute;top:8px;right:8px;width:48px;height:48px;background:var(--paper);border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--shadow)}
+.p-side{display:flex;flex-direction:column;gap:12px;flex:1}
+.instr{font-size:clamp(1.25rem,1.1rem + 1.2vw,1.6rem);font-weight:700;line-height:1.3;margin:2px 0 0;font-family:var(--display)}
+.tip{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);padding:10px 14px;
+  border-radius:var(--r-btn);font-size:1rem}
+.tip .ico{color:var(--accent-deep);margin-top:1px}
+.tools{display:flex;flex-wrap:wrap;gap:2px;justify-content:center}
+.tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:58px;min-height:56px;
+  padding:5px 3px 3px;background:transparent;border:1.5px solid transparent;border-radius:var(--r-btn);
+  font-size:.72rem;font-weight:700;line-height:1.1;text-align:center}
+.tool:hover{background:var(--accent-soft)}
+.tool[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent-deep)}
+.confirm{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:8px;background:var(--accent-soft);border-radius:var(--r-btn);font-weight:700}
+.confirm[hidden]{display:none}
+.p-nav{position:sticky;bottom:0;margin-top:auto;padding:10px 0 calc(10px + var(--sab));display:grid;grid-template-columns:1fr 2fr;gap:12px;
+  background:linear-gradient(to top,var(--bg) 78%,transparent)}
+.p-nav .btn{width:100%}
+@media (min-width:760px) and (orientation:landscape){
+  .p-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,400px);gap:28px;align-items:start}
+  .p-stage{justify-content:flex-start}
+  .panel{width:min(100%,calc(100vh - 110px));width:min(100%,calc(100dvh - 110px))}
+  .p-nav{position:static;background:none;margin-top:10px}
+  .instr{font-size:1.6rem}
+}
+
+/* ===== illustration strokes (CONTRACT §4) ===== */
+.ill{display:block}
+.ill .ly{fill:none;stroke:var(--cur);stroke-linecap:round;stroke-linejoin:round;--cur:var(--ink)}
+.ill .ly.is-old{--cur:var(--old)}
+.ill .ly.is-new{--cur:var(--accent)}
+.ill.plain .ly{--cur:var(--ink)}
+.ill.ov .ly{--cur:var(--accent)}
+.ill .ly-line{stroke-width:3.5}
+.ill .ly-detail{stroke-width:2.5}
+.ill .ly-construction{stroke-width:2;stroke-dasharray:7 6;stroke:var(--guide)}
+.ill .ly-construction.is-new{stroke:color-mix(in srgb,var(--accent) 70%,transparent)}
+.ill.ov .ly-construction{stroke:var(--accent)}
+.ill .ly-shade{stroke-width:1.5;opacity:.85}
+.ill .thin{stroke-width:2}
+.ill .thick{stroke-width:5}
+.ill .solid{fill:var(--cur)}
+.ill .paper{fill:var(--paper);stroke:none}
+.ill.ov .paper{fill:none}
+.ill pattern line{stroke-width:1.5}
+.ill .pat-old{stroke:var(--old)}
+.ill .pat-new{stroke:var(--accent)}
+.ill.plain .pat-old{stroke:var(--ink)}
+.ill .gs-old{stop-color:var(--old)}
+.ill .gs-new{stop-color:var(--accent)}
+.ill.plain .gs-old{stop-color:var(--ink)}
+.ill .sun-g{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+
+/* ===== finish ===== */
+.done{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:16px;text-align:center}
+.done .framebox{position:relative;margin:6px auto 0;width:min(100%,420px);padding:12px;background:var(--paper);border:1.5px solid var(--ink);
+  box-shadow:inset 0 0 0 5px var(--paper),inset 0 0 0 6.5px var(--guide),4px 5px 0 var(--shadow)}
+.done .framebox .thumb{aspect-ratio:1}
+.celebrate{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.heart{position:absolute;top:-20px;right:-8px;width:64px;height:64px;fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.spark{position:absolute;width:20px;height:20px;fill:var(--accent);opacity:0;animation:twinkle 1.6s ease-in-out 2 both}
+@keyframes twinkle{0%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:1;transform:scale(1) rotate(20deg)}100%{opacity:0;transform:scale(.4) rotate(40deg)}}
+@media (prefers-reduced-motion:reduce){.spark{display:none}}
+.done h1{font-size:1.8rem;position:relative;padding-bottom:12px}
+.done h1 svg{position:absolute;left:20%;right:20%;bottom:0;width:60%;height:10px;fill:none;stroke:var(--accent);stroke-width:3.5;stroke-linecap:round}
+.info{padding:14px 16px;text-align:left}
+.info h2{font-size:1.1rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.info h2 .ico{color:var(--accent)}
+.info p,.info li{margin:4px 0}
+.info ul{margin:0;padding-left:1.2rem}
+.actions{display:flex;flex-direction:column;gap:12px;margin:6px 0 20px}
+.actions .btn{width:100%}
+.btn.ok{background:var(--accent-soft);border-color:var(--accent-deep)}
+
+/* ===== settings sheet ===== */
+dialog.sheet{border:1.5px solid var(--ink);border-radius:22px 26px 0 0 / 26px 22px 0 0;background:var(--paper);color:var(--ink);
+  width:min(100%,560px);max-width:100%;margin:auto auto 0;padding:0;max-height:92dvh;overflow:auto;box-shadow:0 -4px 0 var(--shadow)}
+dialog.sheet::backdrop{background:rgba(20,10,15,.45)}
+.sheet .in{padding:16px 18px calc(18px + var(--sab));display:flex;flex-direction:column;gap:16px}
+.sheet header{display:flex;align-items:center;justify-content:space-between}
+.sheet h2{font-size:1.4rem}
+.sheet h3{font-size:1rem;margin-bottom:8px}
+.seg-btns{display:flex;gap:8px;flex-wrap:wrap}
+.seg-btns .btn{flex:1;min-width:90px;box-shadow:none}
+.seg-btns .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent-deep)}
+.status{min-height:1.4em;font-weight:700;color:var(--accent-deep)}
+.about{border-top:1.5px dashed var(--guide);padding-top:12px;font-size:.9rem;color:var(--ink-2)}
+.about b{color:var(--ink)}
+
+/* ===== dev ===== */
+.dev{max-width:1300px;margin:0 auto;padding:calc(10px + var(--sat)) 14px 40px;font-size:.85rem}
+.dev h1{font-size:1.3rem}.dev h2{font-size:1rem;margin:20px 0 6px}
+.dev .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.dev .btn{min-height:40px;font-size:.85rem;padding:0 12px}
+.dev .rep{padding:10px 14px;border:1.5px solid var(--ink);border-radius:8px}
+.dev .rep.ok{background:#E3F6E8;color:#14452a;border-color:#2c8a52}
+.dev .rep.bad{background:#FDE8E8;color:#6b1616;border-color:#b42323}
+.dev .rep ul{margin:6px 0 0;padding-left:1.2rem}
+.dev .bad-tag{color:#b42323;font-weight:800}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.dcell{background:var(--paper);border:1px solid var(--guide);border-radius:6px;padding:4px;font-size:.72rem;line-height:1.25}
+.dcell .thumb{aspect-ratio:1}
+.dcell p{margin:3px 2px}
+</style>
+</head>
+<body>
+<noscript><p style="padding:20px;font-family:sans-serif">Schita are nevoie de JavaScript. / Schita needs JavaScript.</p></noscript>
+<div id="app" tabindex="-1"></div>
+
+<script src="lessons/index.js"></script>
+<script src="lessons/fox-01.js"></script>
+<script src="future/ai-lessons.js"></script>
+<script src="future/ai-feedback.js"></script>
+<script src="future/camera-overlay.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* =====================================================================
+   Schita v1.0.0 — app shell
+   Sections: globals · helpers · icons · store · i18n · sanitizer ·
+             validator · renderer · animation · zoom · screens · router
+   ===================================================================== */
+
+/* ---------- globals (merge into the object the future/ stubs created) ---------- */
+const S = window.Schita = window.Schita || {};
+S.APP_NAME = 'Schita';
+S.APP_VERSION = '1.0.0';
+S.FLAGS = Object.assign({ aiLessons: false, aiFeedback: false, cameraOverlay: false, streak: false }, S.FLAGS || {});
+S.future = S.future || {};
+
+const SVGNS = 'http://www.w3.org/2000/svg';
+const $app = document.getElementById('app');
+const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* ---------- helpers ---------- */
+function add(el, kids) {
+  for (const c of kids.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+}
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  if (props) for (const k in props) {
+    const v = props[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2).toLowerCase(), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  add(el, kids);
+  return el;
+}
+function svgEl(name, attrs) {
+  const el = document.createElementNS(SVGNS, name);
+  if (attrs) for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+/* ---------- icons: 24px grid, 2px stroke, drawn by hand ---------- */
+const ICONS = {
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  replay: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/>',
+  guides: '<circle cx="12" cy="12" r="7.5" stroke-dasharray="3 3"/><path d="M2 12h20" stroke-dasharray="3 3"/>',
+  onlynew: '<path d="M5 19l1-4 10-10 3 3L9 18z"/><path d="M14 7l3 3"/>',
+  zoom: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M8 10.5h5"/>',
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  restart: '<path d="M5 12a7 7 0 1 1 2 5"/><path d="M5 6v6h6"/>',
+  left: '<path d="M15 5l-7 7 7 7"/>',
+  right: '<path d="M9 5l7 7-7 7"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+  sliders: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+  upload: '<path d="M12 16V5M7 9l5-5 5 5M5 20h14"/>',
+  heart: '<path d="M12 20C6 15.5 3.5 12.5 3.5 9A4.5 4.5 0 0 1 12 7.2 4.5 4.5 0 0 1 20.5 9c0 3.5-2.5 6.5-8.5 11z"/>',
+  star: '<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6L3.4 9.400l6-.8z"/>',
+  pencil: '<path d="M5 19l1-4 10-10 3 3L9 18z"/><path d="M14 7l3 3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  next: '<path d="M4 12h14M13 6l6 6-6 6"/>',
+  home: '<path d="M4 11l8-7 8 7M6 10v10h12V10"/>'
+};
+function icon(name, cls) {
+  const s = svgEl('svg', { viewBox: '0 0 24 24', class: 'ico' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true', focusable: 'false' });
+  s.innerHTML = ICONS[name] || '';
+  return s;
+}
+
+/* ---------- store (CONTRACT §7) ---------- */
+const STORE_KEY = 'schita.v1';
+const defaults = () => ({
+  prefs: { lang: 'ro', theme: 'auto', showConstruction: true, onlyNew: false, wakeLock: false, streak: false },
+  progress: {}, lastLessonId: null
+});
+// Builds a valid state object from loose input (used for load and import).
+function normalize(raw) {
+  const d = defaults();
+  if (!raw || typeof raw !== 'object') return d;
+  if (raw.prefs && typeof raw.prefs === 'object') {
+    for (const k in d.prefs) if (typeof raw.prefs[k] === typeof d.prefs[k]) d.prefs[k] = raw.prefs[k];
+  }
+  if (!['ro', 'en'].includes(d.prefs.lang)) d.prefs.lang = 'ro';
+  if (!['auto', 'light', 'dark'].includes(d.prefs.theme)) d.prefs.theme = 'auto';
+  if (raw.progress && typeof raw.progress === 'object') {
+    for (const id in raw.progress) {
+      const p = raw.progress[id];
+      if (!p || typeof p !== 'object') continue;
+      d.progress[id] = {
+        step: Number.isInteger(p.step) && p.step >= 0 ? p.step : 0,
+        completedAt: typeof p.completedAt === 'string' ? p.completedAt : null,
+        timesDrawn: Number.isInteger(p.timesDrawn) && p.timesDrawn >= 0 ? p.timesDrawn : 0
+      };
+    }
+  }
+  if (typeof raw.lastLessonId === 'string') d.lastLessonId = raw.lastLessonId;
+  return d;
+}
+const store = {
+  _d: null,
+  get() {
+    if (!this._d) {
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { /* private mode / bad JSON: use defaults */ }
+      this._d = normalize(raw);
+    }
+    return this._d;
+  },
+  _save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(this._d)); } catch (e) { /* in-memory fallback */ } },
+  set(patch) {
+    const d = this.get();
+    if (patch.prefs) Object.assign(d.prefs, patch.prefs);
+    if ('lastLessonId' in patch) d.lastLessonId = patch.lastLessonId;
+    this._save();
+    return d;
+  },
+  setProgress(id, patch) {
+    const d = this.get();
+    d.progress[id] = Object.assign({ step: 0, completedAt: null, timesDrawn: 0 }, d.progress[id], patch);
+    this._save();
+    return d.progress[id];
+  },
+  progressOf(id) { return this.get().progress[id] || { step: 0, completedAt: null, timesDrawn: 0 }; },
+  exportJson() { return JSON.parse(JSON.stringify(this.get())); },
+  importJson(obj) {
+    const ok = obj && typeof obj === 'object' && !Array.isArray(obj) &&
+      (obj.prefs || obj.progress || 'lastLessonId' in obj) &&
+      (!obj.progress || typeof obj.progress === 'object');
+    if (!ok) return false;
+    this._d = normalize(obj);
+    this._save();
+    return true;
+  }
+};
+S.store = store;
+
+/* ---------- i18n ---------- */
+const I18N = {
+  ro: {
+    'app.title': 'Schita',
+    'home.greet': 'Bună! Ce desenăm azi?',
+    'home.continue': 'Continuă desenul',
+    'home.continueBtn': 'Continuă',
+    'home.stepOf': 'Pasul {n} din {total}',
+    'home.progress': '{done} din {total} desene gata',
+    'home.none': 'Lecțiile vin în curând. Revino puțin mai târziu!',
+    'home.settings': 'Setări',
+    'home.logo': 'Creion',
+    'cat.warmups': 'Încălzire', 'cat.animals': 'Animale', 'cat.objects': 'Obiecte', 'cat.faces': 'Fețe', 'cat.shading': 'Umbre',
+    'card.minutes': '{n} min',
+    'card.drawn': 'Desenat',
+    'card.level': 'Nivel {n} din 3',
+    'card.open': '{title}, deschide lecția',
+    'shelf.title': 'Desenele mele',
+    'shelf.empty': 'Aici vor apărea desenele tale gata. Alege o lecție și începe!',
+    'shelf.item': '{title}, desenat',
+    'ai.title': 'Desenează orice',
+    'ai.sub': 'Spune ce vrei să desenezi și primești pași.',
+    'set.title': 'Setări',
+    'set.close': 'Închide setările',
+    'set.lang': 'Limba',
+    'set.theme': 'Aspect',
+    'theme.auto': 'Automat', 'theme.light': 'Luminos', 'theme.dark': 'Întunecat',
+    'set.data': 'Progresul tău',
+    'set.export': 'Salvează progresul',
+    'set.import': 'Încarcă progres',
+    'set.importAsk': 'Asta înlocuiește progresul de acum. Continuăm?',
+    'set.importYes': 'Da, încarcă',
+    'set.no': 'Nu',
+    'set.importOk': 'Gata, progresul a fost încărcat.',
+    'set.importErr': 'Fișierul nu pare să fie o copie Schita.',
+    'set.exported': 'Fișierul a fost salvat.',
+    'set.streak': 'Arată zilele la rând',
+    'about.version': '{name} v{v}',
+    'about.privacy': 'Fără reclame, fără conturi. Totul rămâne pe telefonul tău.',
+    'pl.close': 'Înapoi acasă',
+    'pl.stepOf': 'Pasul {n} din {total}',
+    'pl.progress': 'Progres în lecție',
+    'pl.replay': 'Din nou',
+    'pl.replayAria': 'Arată din nou cum se desenează pasul',
+    'pl.guides': 'Ghidaje',
+    'pl.guidesAria': 'Arată sau ascunde liniile ajutătoare',
+    'pl.onlyNew': 'Doar pasul',
+    'pl.onlyNewAria': 'Arată doar liniile noi din acest pas',
+    'pl.zoomReset': 'Zoom la început',
+    'pl.wake': 'Ecran aprins',
+    'pl.wakeAria': 'Ține ecranul aprins cât desenezi',
+    'pl.camera': 'Cameră',
+    'pl.cameraAria': 'Deschide camera',
+    'pl.restart': 'De la capăt',
+    'pl.restartAria': 'Începe lecția de la capăt',
+    'pl.restartAsk': 'Începem de la capăt?',
+    'pl.yes': 'Da',
+    'pl.back': 'Înapoi',
+    'pl.next': 'Înainte',
+    'pl.done': 'Gata!',
+    'pl.tip': 'Sfat',
+    'pl.canvas': 'Desenul, ca să-l privești de aproape',
+    'ill.step': '{title}, pasul {n} din {total}',
+    'ill.final': '{title}, desenul gata',
+    'done.bravo': 'Bravo! Ai desenat {title}!',
+    'done.practised': 'Ce ai exersat',
+    'done.makeYours': 'Fă-l al tău',
+    'done.mark': 'Am desenat-o!',
+    'done.marked': 'Desenat',
+    'done.again': 'Desenează din nou',
+    'done.next': 'Lecția următoare',
+    'done.home': 'Acasă',
+    'nf.title': 'Hopa, nu găsesc lecția asta.',
+    'nf.home': 'Înapoi acasă',
+    'dev.title': 'Previzualizare lecții',
+    'dev.allOk': 'Toate cele {n} lecții sunt în regulă.',
+    'dev.bad': '{n} lecții au probleme:',
+    'dev.none': 'Nu s-a găsit nicio lecție.',
+    'dev.invalid': 'INVALIDĂ',
+    'dev.final': 'Final',
+    'dev.en': 'Vezi în engleză',
+    'dev.dark': 'Temă întunecată',
+    'dev.cantRender': 'Nu se poate desena',
+    'dev.home': 'Acasă'
+  },
+  en: {
+    'app.title': 'Schita',
+    'home.greet': 'Hi! What shall we draw today?',
+    'home.continue': 'Keep drawing',
+    'home.continueBtn': 'Continue',
+    'home.stepOf': 'Step {n} of {total}',
+    'home.progress': '{done} of {total} drawings done',
+    'home.none': 'Lessons are coming soon. Check back in a bit!',
+    'home.settings': 'Settings',
+    'home.logo': 'Pencil',
+    'cat.warmups': 'Warm-ups', 'cat.animals': 'Animals', 'cat.objects': 'Objects', 'cat.faces': 'Faces', 'cat.shading': 'Shading',
+    'card.minutes': '{n} min',
+    'card.drawn': 'Drawn',
+    'card.level': 'Level {n} of 3',
+    'card.open': '{title}, open lesson',
+    'shelf.title': 'My drawings',
+    'shelf.empty': 'Your finished drawings will show up here. Pick a lesson and start!',
+    'shelf.item': '{title}, drawn',
+    'ai.title': 'Draw anything',
+    'ai.sub': 'Say what you want to draw and get steps.',
+    'set.title': 'Settings',
+    'set.close': 'Close settings',
+    'set.lang': 'Language',
+    'set.theme': 'Look',
+    'theme.auto': 'Auto', 'theme.light': 'Light', 'theme.dark': 'Dark',
+    'set.data': 'Your progress',
+    'set.export': 'Save progress',
+    'set.import': 'Load progress',
+    'set.importAsk': 'This replaces your current progress. Continue?',
+    'set.importYes': 'Yes, load it',
+    'set.no': 'No',
+    'set.importOk': 'Done, your progress was loaded.',
+    'set.importErr': "That file doesn't look like a Schita backup.",
+    'set.exported': 'The file was saved.',
+    'set.streak': 'Show days in a row',
+    'about.version': '{name} v{v}',
+    'about.privacy': 'No ads, no accounts. Everything stays on your phone.',
+    'pl.close': 'Back home',
+    'pl.stepOf': 'Step {n} of {total}',
+    'pl.progress': 'Lesson progress',
+    'pl.replay': 'Replay',
+    'pl.replayAria': 'Show how to draw this step again',
+    'pl.guides': 'Guides',
+    'pl.guidesAria': 'Show or hide the guide lines',
+    'pl.onlyNew': 'This step',
+    'pl.onlyNewAria': 'Show only the new lines of this step',
+    'pl.zoomReset': 'Reset zoom',
+    'pl.wake': 'Screen on',
+    'pl.wakeAria': 'Keep the screen on while you draw',
+    'pl.camera': 'Camera',
+    'pl.cameraAria': 'Open the camera',
+    'pl.restart': 'Restart',
+    'pl.restartAria': 'Start the lesson again from the beginning',
+    'pl.restartAsk': 'Start from the beginning?',
+    'pl.yes': 'Yes',
+    'pl.back': 'Back',
+    'pl.next': 'Next',
+    'pl.done': 'Done!',
+    'pl.tip': 'Tip',
+    'pl.canvas': 'The drawing, to look at up close',
+    'ill.step': '{title}, step {n} of {total}',
+    'ill.final': '{title}, finished drawing',
+    'done.bravo': 'Well done! You drew {title}!',
+    'done.practised': 'What you practised',
+    'done.makeYours': 'Make it yours',
+    'done.mark': 'I drew it!',
+    'done.marked': 'Drawn',
+    'done.again': 'Draw it again',
+    'done.next': 'Next lesson',
+    'done.home': 'Home',
+    'nf.title': "Oops, I can't find that lesson.",
+    'nf.home': 'Back home',
+    'dev.title': 'Lesson preview',
+    'dev.allOk': 'All {n} lessons are valid.',
+    'dev.bad': '{n} lessons have problems:',
+    'dev.none': 'No lessons found.',
+    'dev.invalid': 'INVALID',
+    'dev.final': 'Final',
+    'dev.en': 'View in English',
+    'dev.dark': 'Dark theme',
+    'dev.cantRender': 'Cannot render',
+    'dev.home': 'Home'
+  }
+};
+let langOverride = null; // used only by #dev
+const getLang = () => langOverride || store.get().prefs.lang;
+function t(key, vars) {
+  const L = getLang();
+  let s = (I18N[L] && I18N[L][key]);
+  if (s == null) s = I18N.ro[key];
+  if (s == null) s = key;
+  if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+  return s;
+}
+function tr(obj) {
+  if (obj == null) return '';
+  if (typeof obj === 'string') return obj;
+  const L = getLang();
+  return obj[L] || obj.ro || obj.en || '';
+}
+S.t = t; S.tr = tr;
+
+/* ---------- sanitizer (CONTRACT §3 allow-lists) ---------- */
+const OK_EL = new Set(['path', 'line', 'polyline', 'polygon', 'circle', 'ellipse', 'rect', 'g']);
+const OK_ATTR = new Set(['d', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'cx', 'cy', 'r', 'rx', 'ry', 'width', 'height', 'points', 'transform', 'class', 'fill', 'opacity']);
+const OK_FILL = new Set(['none', 'url(#hatch)', 'url(#hatch-dense)', 'url(#crosshatch)', 'url(#soft)']);
+const OK_CLASS = new Set(['solid', 'paper', 'thin', 'thick']);
+const RE_NUM = /^\s*-?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?\s*$/i;
+const RE_PATH = /^[\d\s,.\-+eEMmLlHhVvCcSsQqTtAaZz]*$/;
+const RE_POINTS = /^[\d\s,.\-+e]*$/i;
+const RE_TRANSFORM = /^\s*((translate|rotate|scale|skewX|skewY|matrix)\s*\([\d\s,.\-+e]*\)\s*)+$/;
+
+// Returns {fragment, issues}: a DocumentFragment of freshly built, allow-listed SVG nodes.
+function cleanSvg(markup) {
+  const issues = [];
+  const fragment = document.createDocumentFragment();
+  if (typeof markup !== 'string') { issues.push('svg markup must be a string'); return { fragment, issues }; }
+  const doc = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg">' + markup + '</svg>', 'image/svg+xml');
+  const root = doc.documentElement;
+  if (!root || root.localName === 'parsererror' || doc.getElementsByTagName('parsererror').length) {
+    issues.push('markup is not well-formed XML');
+    return { fragment, issues };
+  }
+  const walk = (src, dest) => {
+    for (const n of Array.from(src.childNodes)) {
+      if (n.nodeType === 3) { if (n.nodeValue.trim()) issues.push('text content not allowed'); continue; }
+      if (n.nodeType !== 1) continue; // comments are ignored
+      const name = n.localName;
+      if (n.namespaceURI !== SVGNS || !OK_EL.has(name)) { issues.push("element '" + name + "' not allowed"); continue; }
+      const el = document.createElementNS(SVGNS, name);
+      for (const a of Array.from(n.attributes)) {
+        const an = a.name, v = a.value;
+        if (!OK_ATTR.has(an)) { issues.push("attribute '" + an + "' not allowed"); continue; }
+        if (an === 'fill') {
+          if (!OK_FILL.has(v.trim())) { issues.push("fill value '" + v + "' not allowed"); continue; }
+          el.setAttribute('fill', v.trim());
+        } else if (an === 'class') {
+          const keep = [];
+          for (const tok of v.split(/\s+/).filter(Boolean)) {
+            if (OK_CLASS.has(tok)) keep.push(tok); else issues.push("class '" + tok + "' not allowed");
+          }
+          if (keep.length) el.setAttribute('class', keep.join(' '));
+        } else {
+          let ok;
+          if (an === 'd') ok = RE_PATH.test(v);
+          else if (an === 'points') ok = RE_POINTS.test(v);
+          else if (an === 'transform') ok = RE_TRANSFORM.test(v);
+          else if (an === 'opacity') ok = RE_NUM.test(v) && +v >= 0 && +v <= 1;
+          else ok = RE_NUM.test(v);
+          if (!ok) { issues.push("attribute '" + an + "' has an invalid value"); continue; }
+          el.setAttribute(an, v);
+        }
+      }
+      walk(n, el);
+      dest.appendChild(el);
+    }
+  };
+  walk(root, fragment);
+  return { fragment, issues };
+}
+// Public API: returns a safe markup string (use cleanSvg internally to avoid re-parsing).
+function sanitizeSvg(markup) {
+  const { fragment } = cleanSvg(markup);
+  const ser = new XMLSerializer();
+  return Array.from(fragment.childNodes).map(n => ser.serializeToString(n).replace(/ xmlns="[^"]*"/g, '')).join('');
+}
+S.sanitizeSvg = sanitizeSvg;
+
+/* ---------- lesson validation ---------- */
+const KINDS = ['construction', 'line', 'shade', 'detail'];
+const DEFAULT_CATS = [
+  { id: 'warmups', title: { ro: 'Încălzire', en: 'Warm-ups' } },
+  { id: 'animals', title: { ro: 'Animale', en: 'Animals' } },
+  { id: 'objects', title: { ro: 'Obiecte', en: 'Objects' } },
+  { id: 'faces', title: { ro: 'Fețe', en: 'Faces' } },
+  { id: 'shading', title: { ro: 'Umbre', en: 'Shading' } }
+];
+// Accepts an array of {id,title} / strings, or an id->title map.
+function getCategories() {
+  const c = window.SCHITA_CATEGORIES;
+  let out = [];
+  if (Array.isArray(c)) {
+    out = c.map(x => typeof x === 'string' ? { id: x, title: I18N.ro['cat.' + x] ? { ro: I18N.ro['cat.' + x], en: I18N.en['cat.' + x] } : x } :
+      { id: x.id, title: x.title || x.label || x.id });
+  } else if (c && typeof c === 'object') {
+    out = Object.keys(c).map(id => ({ id, title: c[id].title || c[id] }));
+  }
+  return out.length ? out : DEFAULT_CATS;
+}
+function validateLesson(lesson) {
+  const errors = [];
+  const L = lesson && typeof lesson === 'object' ? lesson : null;
+  const id = L && typeof L.id === 'string' ? L.id : '(no id)';
+  const err = m => errors.push(id + (m.startsWith(' ') ? '' : ': ') + m);
+  if (!L) return { ok: false, errors: ['lesson is not an object'] };
+  const bi = (v, label, where) => {
+    if (!v || typeof v !== 'object') { err((where || '') + label + ' must be {ro, en}'); return false; }
+    for (const l of ['ro', 'en']) if (typeof v[l] !== 'string' || !v[l].trim()) err((where || '') + label + ' is missing "' + l + '"');
+    return true;
+  };
+  if (typeof L.id !== 'string' || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(L.id)) err('id must be kebab-case');
+  if (!getCategories().some(c => c.id === L.category)) err("category '" + L.category + "' is unknown");
+  bi(L.title, 'title');
+  if (![1, 2, 3].includes(L.difficulty)) err('difficulty must be 1, 2 or 3');
+  if (typeof L.minutes !== 'number' || !(L.minutes > 0)) err('minutes must be a positive number');
+  if (typeof L.viewBox !== 'string' || !/^\s*-?[\d.]+(\s+-?[\d.]+){3}\s*$/.test(L.viewBox)) err('viewBox must be four numbers');
+  if (L.light !== undefined && !(L.light && typeof L.light.x === 'number' && typeof L.light.y === 'number')) err('light must be {x, y}');
+  if (!Array.isArray(L.steps) || L.steps.length < 4 || L.steps.length > 14) {
+    err('needs 4 to 14 steps (has ' + (Array.isArray(L.steps) ? L.steps.length : 'none') + ')');
+  }
+  (Array.isArray(L.steps) ? L.steps : []).forEach((s, i) => {
+    const w = 'step ' + (i + 1) + ' ';
+    if (!s || typeof s !== 'object') { err(w + 'is not an object'); return; }
+    bi(s.instruction, 'instruction', w);
+    if (s.tip !== undefined) bi(s.tip, 'tip', w);
+    if (s.eraseConstruction !== undefined && typeof s.eraseConstruction !== 'boolean') err(w + 'eraseConstruction must be true/false');
+    if (!Array.isArray(s.layers)) { err(w + 'layers must be an array'); return; }
+    s.layers.forEach((ly, j) => {
+      const lw = w + 'layer ' + (j + 1) + ': ';
+      if (!ly || typeof ly !== 'object') { err(lw + 'is not an object'); return; }
+      if (!KINDS.includes(ly.kind)) err(lw + "kind '" + ly.kind + "' is not valid");
+      const { issues } = cleanSvg(ly.svg);
+      issues.forEach(m => err(lw + m));
+    });
+  });
+  bi(L.techniqueTip, 'techniqueTip');
+  const my = L.makeItYours;
+  if (!my || !Array.isArray(my.ro) || !Array.isArray(my.en)) err('makeItYours must be {ro: [...], en: [...]}');
+  else {
+    if (my.ro.length !== my.en.length) err('makeItYours ro/en lengths differ (' + my.ro.length + ' vs ' + my.en.length + ')');
+    if (my.ro.length < 1 || my.ro.length > 2) err('makeItYours needs 1 or 2 prompts');
+    if (![...my.ro, ...my.en].every(x => typeof x === 'string' && x.trim())) err('makeItYours prompts must be non-empty text');
+  }
+  return { ok: errors.length === 0, errors };
+}
+S.validateLesson = validateLesson;
+
+// Validate everything once at startup; only valid lessons reach the home screen.
+const ALL_LESSONS = Array.isArray(window.SCHITA_LESSONS) ? window.SCHITA_LESSONS : [];
+const REPORT = [];
+const seenIds = new Set();
+const LESSONS = [];
+ALL_LESSONS.forEach(lesson => {
+  const r = validateLesson(lesson);
+  if (r.ok && seenIds.has(lesson.id)) { r.ok = false; r.errors.push(lesson.id + ': duplicate id'); }
+  seenIds.add(lesson && lesson.id);
+  REPORT.push({ lesson, ok: r.ok, errors: r.errors });
+  if (r.ok) LESSONS.push(lesson);
+  else console.warn('[Schita] lesson excluded:\n' + r.errors.join('\n'));
+});
+const lessonById = id => LESSONS.find(l => l.id === id);
+
+/* ---------- renderer (CONTRACT §4) ---------- */
+let instanceCounter = 0;
+function defsMarkup(p) {
+  // two colour variants (old / new); ids are instance-prefixed so many SVGs can share a page
+  return ['old', 'new'].map(v => {
+    const sf = v === 'new' ? '-new' : '', c = 'pat-' + v;
+    const pat = (name, size, lines) => '<pattern id="' + p + '-' + name + sf + '" width="' + size + '" height="' + size +
+      '" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' + lines + '</pattern>';
+    const m = size => size / 2;
+    return pat('hatch', 7, '<line x1="' + m(7) + '" y1="0" x2="' + m(7) + '" y2="7" class="' + c + '"/>') +
+      pat('hatch-dense', 4, '<line x1="' + m(4) + '" y1="0" x2="' + m(4) + '" y2="4" class="' + c + '"/>') +
+      pat('crosshatch', 7, '<line x1="' + m(7) + '" y1="0" x2="' + m(7) + '" y2="7" class="' + c + '"/><line x1="0" y1="' + m(7) + '" x2="7" y2="' + m(7) + '" class="' + c + '"/>') +
+      '<radialGradient id="' + p + '-soft' + sf + '"><stop offset="0" class="gs-' + v + '" stop-opacity=".7"/><stop offset="1" class="gs-' + v + '" stop-opacity="0"/></radialGradient>';
+  }).join('');
+}
+function render(lesson, stepIndex, opts) {
+  const o = Object.assign({ showConstruction: true, onlyNew: false, highlightNew: true, finished: false, overlay: false, showLight: true }, opts);
+  const steps = Array.isArray(lesson.steps) ? lesson.steps : [];
+  const last = o.finished ? steps.length - 1 : clamp(stepIndex | 0, 0, Math.max(0, steps.length - 1));
+  const p = 's' + (++instanceCounter);
+  const title = tr(lesson.title);
+  const svg = svgEl('svg', {
+    viewBox: lesson.viewBox || '0 0 400 400', role: 'img', preserveAspectRatio: 'xMidYMid meet',
+    class: 'ill' + (o.finished || !o.highlightNew ? ' plain' : '') + (o.overlay ? ' ov' : ''),
+    'aria-label': o.finished ? t('ill.final', { title }) : t('ill.step', { title, n: last + 1, total: steps.length })
+  });
+  const defs = svgEl('defs'); defs.innerHTML = defsMarkup(p); svg.appendChild(defs);
+
+  // From the first eraseConstruction step onward (up to the shown step), guides disappear.
+  let eraseFrom = Infinity;
+  for (let i = 0; i <= last; i++) if (steps[i] && steps[i].eraseConstruction) { eraseFrom = i; break; }
+  const showC = o.overlay ? true : (o.showConstruction && !o.finished);
+  const from = o.onlyNew && !o.finished && !o.overlay ? last : 0;
+
+  for (let s = from; s <= last; s++) {
+    const layers = (steps[s] && steps[s].layers) || [];
+    const isNew = o.overlay || (o.highlightNew && !o.finished && s === last);
+    for (const ly of layers) {
+      if (!ly || !KINDS.includes(ly.kind)) continue;
+      if (ly.kind === 'construction' && (!showC || eraseFrom <= last)) continue;
+      const g = svgEl('g', { class: 'ly ly-' + ly.kind + ' ' + (isNew ? 'is-new' : 'is-old'), 'data-step': s });
+      const { fragment } = cleanSvg(ly.svg);
+      // url(#hatch) -> url(#s12-hatch[-new]) so each instance uses its own patterns
+      fragment.querySelectorAll('[fill^="url(#"]').forEach(el => {
+        const m = /^url\(#([a-z-]+)\)$/.exec(el.getAttribute('fill'));
+        if (m) el.setAttribute('fill', 'url(#' + p + '-' + m[1] + (isNew ? '-new' : '') + ')');
+      });
+      g.appendChild(fragment);
+      svg.appendChild(g);
+    }
+  }
+  if (lesson.light && o.showLight && typeof lesson.light.x === 'number') {
+    const sun = svgEl('g', { class: 'sun-g', transform: 'translate(' + lesson.light.x + ' ' + lesson.light.y + ')', 'aria-hidden': 'true' });
+    sun.appendChild(svgEl('circle', { r: 9 }));
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4, c = Math.cos(a), sn = Math.sin(a);
+      sun.appendChild(svgEl('line', { x1: (c * 14).toFixed(1), y1: (sn * 14).toFixed(1), x2: (c * 20).toFixed(1), y2: (sn * 20).toFixed(1) }));
+    }
+    svg.appendChild(sun);
+  }
+  return svg;
+}
+S.render = render;
+
+/* ---------- stroke animation (CONTRACT §5) ---------- */
+let activeAnims = [];
+function cancelAnims() { activeAnims.forEach(a => { try { a.cancel(); } catch (e) { /* already gone */ } }); activeAnims = []; }
+function animateNew(svg) {
+  cancelAnims();
+  if (reducedMotion() || !svg.animate) return;
+  const cons = [], strokes = [], fades = [];
+  svg.querySelectorAll('.ly.is-new').forEach(g => {
+    if (g.classList.contains('ly-construction')) { g.querySelectorAll('*').forEach(el => { if (el.localName !== 'g') cons.push(el); }); return; }
+    if (g.classList.contains('ly-shade')) { fades.push(g); return; }
+    g.querySelectorAll('*').forEach(el => {
+      if (el.localName === 'g') return;
+      const f = el.getAttribute('fill');
+      if (el.classList.contains('solid') || el.classList.contains('paper') || (f && f !== 'none')) fades.push(el);
+      else strokes.push(el);
+    });
+  });
+  // Build a timeline in seconds, then scale so everything ends within ~3.5 s.
+  const plan = [];
+  let t0 = 0;
+  const cStep = cons.length ? Math.min(0.12, 0.8 / cons.length) : 0;
+  cons.forEach((el, i) => { plan.push({ el, kind: 'cons', delay: i * cStep, dur: 0.35 }); });
+  if (cons.length) t0 = cons.length * cStep * 0.6;
+  let cursor = t0;
+  strokes.forEach(el => {
+    let len = 0; try { len = el.getTotalLength(); } catch (e) { /* not a geometry element */ }
+    if (!len) return;
+    const dur = 0.5 + 0.4 * Math.min(len / 300, 1);
+    plan.push({ el, kind: 'stroke', delay: cursor, dur, len });
+    cursor += dur * 0.6; // overlap strokes so the whole step feels like one flowing motion
+  });
+  const strokesEnd = plan.reduce((m, x) => Math.max(m, x.delay + x.dur), 0);
+  fades.forEach(el => plan.push({ el, kind: 'fade', delay: strokesEnd, dur: 0.4 }));
+  const end = plan.reduce((m, x) => Math.max(m, x.delay + x.dur), 0);
+  const k = end > 3.5 ? 3.5 / end : 1;
+  for (const x of plan) {
+    const opt = { duration: x.dur * k * 1000, delay: x.delay * k * 1000, fill: 'backwards', easing: 'ease-in-out' };
+    let kf;
+    if (x.kind === 'stroke') {
+      const da = x.len + ' ' + x.len;
+      kf = [{ strokeDasharray: da, strokeDashoffset: x.len }, { strokeDasharray: da, strokeDashoffset: 0 }];
+    } else if (x.kind === 'fade') {
+      kf = [{ opacity: 0 }, { opacity: getComputedStyle(x.el).opacity }];
+    } else {
+      kf = x.el.hasAttribute('transform') ? [{ opacity: 0 }, { opacity: 1 }]
+        : [{ opacity: 0, transform: 'scale(.94)', transformBox: 'fill-box', transformOrigin: 'center' },
+           { opacity: 1, transform: 'scale(1)', transformBox: 'fill-box', transformOrigin: 'center' }];
+    }
+    try { activeAnims.push(x.el.animate(kf, opt)); } catch (e) { /* animation is decorative */ }
+  }
+}
+
+/* ---------- theme ---------- */
+function applyTheme() {
+  const th = store.get().prefs.theme, root = document.documentElement;
+  if (th === 'light' || th === 'dark') root.setAttribute('data-theme', th); else root.removeAttribute('data-theme');
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => {
+    if (!m.dataset.orig) m.dataset.orig = m.content;
+    m.content = th === 'light' ? '#FFFFFF' : th === 'dark' ? '#151214' : m.dataset.orig;
+  });
+  root.lang = getLang();
+}
+
+/* ---------- zoom (changes the svg viewBox; CONTRACT: min 1, max 4) ---------- */
+function createZoom(panel, baseVB, getSvg, onChange) {
+  const [bx, by, bw, bh] = baseVB;
+  let z = 1, x = bx, y = by;
+  const pts = new Map();
+  let gesture = null, lastTap = null, downInfo = null;
+
+  const apply = () => {
+    const svg = getSvg();
+    if (svg) svg.setAttribute('viewBox', x + ' ' + y + ' ' + (bw / z) + ' ' + (bh / z));
+    panel.classList.toggle('zoomed', z > 1.001);
+    onChange(z > 1.001);
+  };
+  // Geometry of the svg box for a given zoom: scale (px per viewBox unit) and letterbox offsets.
+  const geom = zz => {
+    const r = getSvg().getBoundingClientRect(), w = bw / zz, hh = bh / zz;
+    const s = Math.min(r.width / w, r.height / hh);
+    return { r, w, hh, s, ox: (r.width - w * s) / 2, oy: (r.height - hh * s) / 2 };
+  };
+  const toVB = (cx, cy) => {
+    const g = geom(z);
+    return { x: x + (cx - g.r.left - g.ox) / g.s, y: y + (cy - g.r.top - g.oy) / g.s };
+  };
+  // Zoom to nz so that viewBox point `anchor` ends up under client point (cx, cy). Panning is the nz===z case.
+  const setView = (nz, anchor, cx, cy) => {
+    nz = clamp(nz, 1, 4);
+    const g = geom(nz);
+    x = clamp(anchor.x - (cx - g.r.left - g.ox) / g.s, bx, bx + bw - g.w);
+    y = clamp(anchor.y - (cy - g.r.top - g.oy) / g.s, by, by + bh - g.hh);
+    z = nz;
+    apply();
+  };
+  const reset = () => { z = 1; x = bx; y = by; apply(); };
+  const zoomAt = (factor, cx, cy) => setView(z * factor, toVB(cx, cy), cx, cy);
+  const centre = () => { const r = getSvg().getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+
+  const startGesture = () => {
+    const a = Array.from(pts.values());
+    if (a.length === 1) gesture = { type: 'pan', anchor: toVB(a[0].x, a[0].y) };
+    else if (a.length >= 2) {
+      const mx = (a[0].x + a[1].x) / 2, my = (a[0].y + a[1].y) / 2;
+      gesture = { type: 'pinch', anchor: toVB(mx, my), d0: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1, z0: z };
+    } else gesture = null;
+  };
+  panel.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest && e.target.closest('button')) return; // let the zoom-reset button work
+    try { panel.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    downInfo = pts.size === 1 ? { x: e.clientX, y: e.clientY, t: performance.now(), moved: false } : null;
+    startGesture();
+  });
+  panel.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (downInfo && Math.hypot(e.clientX - downInfo.x, e.clientY - downInfo.y) > 10) downInfo.moved = true;
+    if (!gesture) return;
+    const a = Array.from(pts.values());
+    if (gesture.type === 'pan' && z > 1.001) setView(z, gesture.anchor, a[0].x, a[0].y);
+    else if (gesture.type === 'pinch' && a.length >= 2) {
+      const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+      setView(gesture.z0 * d / gesture.d0, gesture.anchor, (a[0].x + a[1].x) / 2, (a[0].y + a[1].y) / 2);
+    }
+  });
+  const up = e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    // double-tap (touch/pen) resets; mouse uses dblclick below
+    if (e.type === 'pointerup' && downInfo && !downInfo.moved && pts.size === 0 && e.pointerType !== 'mouse') {
+      const now = performance.now();
+      if (lastTap && now - lastTap.t < 320 && Math.hypot(lastTap.x - e.clientX, lastTap.y - e.clientY) < 40) { reset(); lastTap = null; }
+      else lastTap = { t: now, x: e.clientX, y: e.clientY };
+    }
+    downInfo = null;
+    startGesture();
+  };
+  panel.addEventListener('pointerup', up);
+  panel.addEventListener('pointercancel', up);
+  panel.addEventListener('dblclick', reset);
+  panel.addEventListener('wheel', e => {
+    e.preventDefault();
+    const k = e.ctrlKey || e.metaKey ? 0.01 : 0.0018; // trackpad pinch arrives as ctrl+wheel with small deltas
+    zoomAt(Math.exp(-e.deltaY * k), e.clientX, e.clientY);
+  }, { passive: false });
+  return { reset, apply, zoomBy: f => { const c = centre(); zoomAt(f, c[0], c[1]); }, isZoomed: () => z > 1.001 };
+}
+
+/* ---------- screen wake lock ---------- */
+const wake = {
+  supported: 'wakeLock' in navigator, lock: null,
+  async acquire() {
+    if (!this.supported || this.lock) return;
+    try {
+      this.lock = await navigator.wakeLock.request('screen');
+      this.lock.addEventListener('release', () => { this.lock = null; if (this.onChange) this.onChange(); });
+    } catch (e) { this.lock = null; /* denied (e.g. low battery): silently skip */ }
+    if (this.onChange) this.onChange();
+  },
+  async release() {
+    const l = this.lock; this.lock = null;
+    if (l) { try { await l.release(); } catch (e) { /* ignore */ } }
+  }
+};
+
+/* ---------- shared UI pieces ---------- */
+const go = hash => { location.hash = hash; };
+function pencils(n) {
+  const w = h('span', { class: 'pencils', role: 'img', 'aria-label': t('card.level', { n }) });
+  for (let i = 1; i <= 3; i++) w.append(icon('pencil', i <= n ? 'on' : ''));
+  return w;
+}
+function thumb(lesson, stepIndex, opts) {
+  const d = h('span', { class: 'thumb' });
+  d.append(render(lesson, stepIndex, Object.assign({ showLight: false }, opts)));
+  return d;
+}
+const lastIndex = l => l.steps.length - 1;
+const resumeStep = l => { const p = store.progressOf(l.id); return !p.completedAt && p.step > 0 ? Math.min(p.step, lastIndex(l)) : 0; };
+const setTitle = s => { document.title = s ? s + ' · ' + S.APP_NAME : S.APP_NAME; };
+
+function underline(cls) {
+  const s = svgEl('svg', { viewBox: '0 0 160 10', preserveAspectRatio: 'none', 'aria-hidden': 'true', class: cls || 'ul' });
+  s.append(svgEl('path', { d: 'M2 6 C30 1 55 9 85 4 S135 8 158 3' }));
+  return s;
+}
+function logoMark() {
+  const s = svgEl('svg', { viewBox: '0 0 48 48', class: 'logo', role: 'img', 'aria-label': t('home.logo') });
+  s.innerHTML = '<path d="M9 39l3-10L33 8l7 7L19 36z" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>' +
+    '<path d="M30 11l7 7" stroke="var(--ink)" stroke-width="2.4" stroke-linecap="round"/>' +
+    '<path d="M9 39l3-10 7 7z" fill="var(--accent)" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>' +
+    '<path d="M5 44c8-3 14 1 22-1s10 0 14-1" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>';
+  return s;
+}
+
+/* ---------- settings sheet ---------- */
+let rerender = () => {};
+function openSettings() {
+  if (document.querySelector('dialog.sheet')) return;
+  const dlg = h('dialog', { class: 'sheet', 'aria-labelledby': 'set-title' });
+  let status = '', askImport = null, focusSel = null;
+  const close = () => { dlg.close(); };
+  dlg.addEventListener('close', () => { document.body.classList.remove('lock'); dlg.remove(); });
+  dlg.addEventListener('click', e => { if (e.target === dlg) close(); });
+
+  const prefsSet = patch => { store.set({ prefs: patch }); };
+  const build = () => {
+    const P = store.get().prefs;
+    const seg = (items, cur, onPick) => h('div', { class: 'seg-btns' }, items.map(([val, label]) =>
+      h('button', { type: 'button', class: 'btn small', 'data-val': val, 'aria-pressed': String(cur === val), onclick: () => onPick(val) }, label)));
+    const fileInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'vh', tabindex: '-1', 'aria-hidden': 'true',
+      onchange: async e => {
+        const f = e.target.files && e.target.files[0]; if (!f) return;
+        try { askImport = JSON.parse(await f.text()); status = ''; } catch (err) { askImport = null; status = t('set.importErr'); }
+        build();
+      } });
+    const parts = [
+      h('header', null, h('h2', { id: 'set-title' }, t('set.title')),
+        h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('set.close'), title: t('set.close'), onclick: close }, icon('close'))),
+      h('section', null, h('h3', null, t('set.lang')),
+        seg([['ro', 'Română'], ['en', 'English']], P.lang, v => { prefsSet({ lang: v }); focusSel = '[data-val="' + v + '"]'; applyTheme(); rerender(); build(); })),
+      h('section', null, h('h3', null, t('set.theme')),
+        seg([['auto', t('theme.auto')], ['light', t('theme.light')], ['dark', t('theme.dark')]], P.theme, v => { prefsSet({ theme: v }); focusSel = '[data-val="' + v + '"]'; applyTheme(); build(); })),
+      S.FLAGS.streak ? h('section', null, h('h3', null, t('set.streak')),
+        seg([['on', t('pl.yes')], ['off', t('set.no')]], P.streak ? 'on' : 'off', v => { prefsSet({ streak: v === 'on' }); build(); })) : null,
+      h('section', null, h('h3', null, t('set.data')),
+        h('div', { class: 'seg-btns' },
+          h('button', { type: 'button', class: 'btn small', onclick: exportProgress }, icon('download'), t('set.export')),
+          h('button', { type: 'button', class: 'btn small', onclick: () => fileInput.click() }, icon('upload'), t('set.import')),
+          fileInput),
+        askImport ? h('div', { class: 'confirm', style: 'margin-top:10px', role: 'alert' }, t('set.importAsk'),
+          h('button', { type: 'button', class: 'btn small primary', onclick: doImport }, t('set.importYes')),
+          h('button', { type: 'button', class: 'btn small', id: 'imp-no', onclick: () => { askImport = null; build(); } }, t('set.no'))) : null,
+        h('p', { class: 'status', role: 'status' }, status)),
+      h('div', { class: 'about' }, h('b', null, t('about.version', { name: S.APP_NAME, v: S.APP_VERSION })), h('br'), t('about.privacy'))
+    ];
+    dlg.replaceChildren(h('div', { class: 'in' }, parts));
+    if (focusSel) { const el = dlg.querySelector(focusSel); if (el) el.focus(); focusSel = null; }
+    else if (askImport) { const n = dlg.querySelector('#imp-no'); if (n) n.focus(); }
+  };
+  const exportProgress = () => {
+    const blob = new Blob([JSON.stringify(store.exportJson(), null, 2)], { type: 'application/json' });
+    const d = new Date(), pad = n => String(n).padStart(2, '0');
+    const a = h('a', { href: URL.createObjectURL(blob), download: 'schita-backup-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.json' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    status = t('set.exported'); build();
+  };
+  const doImport = () => {
+    const ok = store.importJson(askImport);
+    askImport = null;
+    status = t(ok ? 'set.importOk' : 'set.importErr');
+    if (ok) { applyTheme(); rerender(); }
+    build();
+  };
+  document.body.append(dlg);
+  document.body.classList.add('lock');
+  build();
+  dlg.showModal(); // native modal: traps focus, Esc closes
+}
+
+/* ---------- HOME ---------- */
+function screenHome() {
+  setTitle('');
+  const P = store.get();
+  const done = LESSONS.filter(l => store.progressOf(l.id).completedAt);
+  const root = h('div', { class: 'wrap screen' });
+
+  root.append(h('div', { class: 'h-top' },
+    h('div', { class: 'brand' }, logoMark(), h('h1', null, S.APP_NAME, underline())),
+    h('button', { type: 'button', class: 'iconbtn', 'aria-label': t('home.settings'), title: t('home.settings'), onclick: openSettings }, icon('sliders'))));
+  root.append(h('p', { class: 'greet' }, icon('star'), t('home.greet')));
+
+  // Phase 2 hook: "Draw anything" card, hidden while the flag is off
+  if (S.FLAGS.aiLessons && S.future.aiLessons) {
+    root.append(h('button', { type: 'button', class: 'card aicard', onclick: () => { if (S.future.aiLessons.open) S.future.aiLessons.open({ render: render }); } },
+      icon('plus'), h('span', null, h('h2', { style: 'font-size:1.2rem' }, t('ai.title')), h('span', { class: 'muted' }, t('ai.sub')))));
+  }
+
+  const lastL = P.lastLessonId && lessonById(P.lastLessonId);
+  if (lastL && !store.progressOf(lastL.id).completedAt) {
+    const st = resumeStep(lastL);
+    root.append(h('section', { class: 'card cont', 'aria-label': t('home.continue') },
+      h('div', { class: 'thumb', style: 'width:112px' }, render(lastL, st, { showLight: false })),
+      h('div', { class: 'txt' },
+        h('span', { class: 'muted' }, t('home.continue')),
+        h('h2', null, tr(lastL.title)),
+        h('span', { class: 'muted' }, t('home.stepOf', { n: st + 1, total: lastL.steps.length })),
+        h('a', { class: 'btn primary big', href: '#/lesson/' + lastL.id + '/' + (st + 1) }, t('home.continueBtn'), icon('next')))));
+  }
+
+  if (!LESSONS.length) {
+    root.append(h('div', { class: 'card empty' }, icon('pencil'), t('home.none')));
+  } else {
+    const pct = Math.round(done.length / LESSONS.length * 100);
+    root.append(h('div', { class: 'prog' },
+      h('p', null, t('home.progress', { done: done.length, total: LESSONS.length })),
+      h('div', { class: 'pbar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': LESSONS.length, 'aria-valuenow': done.length, 'aria-label': t('home.progress', { done: done.length, total: LESSONS.length }) },
+        h('i', { style: 'width:' + pct + '%' }))));
+    for (const cat of getCategories()) {
+      const ls = LESSONS.filter(l => l.category === cat.id);
+      if (!ls.length) continue;
+      root.append(h('h2', { class: 'cat' }, tr(cat.title)),
+        h('div', { class: 'grid' }, ls.map(l => {
+          const isDone = !!store.progressOf(l.id).completedAt;
+          return h('a', { class: 'card lcard', href: '#/lesson/' + l.id + '/' + (resumeStep(l) + 1), 'aria-label': t('card.open', { title: tr(l.title) }) },
+            thumb(l, lastIndex(l), { finished: true }),
+            isDone ? h('span', { class: 'badge' }, icon('check'), t('card.drawn')) : null,
+            h('span', { class: 'body' }, h('h3', null, tr(l.title)),
+              h('span', { class: 'meta' }, pencils(l.difficulty), h('span', null, t('card.minutes', { n: l.minutes })))));
+        })));
+    }
+  }
+
+  // "My drawings" shelf. MILESTONE 2 HOOK: when photo support lands (IndexedDB "schita-photos"),
+  // replace the thumbnail below with the saved photo of her paper drawing when one exists for that lesson.
+  root.append(h('h2', { class: 'cat' }, t('shelf.title')));
+  if (done.length) {
+    root.append(h('div', { class: 'shelf' }, done.map(l =>
+      h('a', { class: 'frame', href: '#/done/' + l.id, 'aria-label': t('shelf.item', { title: tr(l.title) }) }, thumb(l, lastIndex(l), { finished: true })))));
+  } else {
+    root.append(h('div', { class: 'card empty' }, icon('heart'), t('shelf.empty')));
+  }
+  return root;
+}
+
+/* ---------- PLAYER ---------- */
+function screenPlayer(id, stepNum, setCleanup) {
+  const lesson = lessonById(id);
+  if (!lesson) return screenNotFound();
+  const total = lesson.steps.length;
+  let step = clamp(stepNum - 1, 0, total - 1);
+  const prefs = store.get().prefs;
+  let showConstruction = prefs.showConstruction, onlyNew = prefs.onlyNew;
+  const hasGuides = lesson.steps.some(s => s.layers.some(l => l.kind === 'construction'));
+  let svgNow = null;
+
+  const segs = lesson.steps.map(() => h('i', { class: 'seg' }));
+  const stepLabel = h('span', { class: 'muted' });
+  const titleEl = h('h1', null, tr(lesson.title));
+  const panel = h('div', { class: 'panel', role: 'group', 'aria-label': t('pl.canvas') });
+  const zreset = h('button', { type: 'button', class: 'iconbtn zreset', hidden: true, 'aria-label': t('pl.zoomReset'), title: t('pl.zoomReset'), onclick: () => zoom.reset() }, icon('zoom'));
+  const instr = h('p', { class: 'instr', 'aria-live': 'polite' });
+  const tipText = h('span');
+  const tipEl = h('div', { class: 'tip', hidden: true }, icon('bulb'), h('span', null, h('b', null, t('pl.tip') + ': '), tipText));
+  const backBtn = h('button', { type: 'button', class: 'btn big', onclick: () => goStep(step - 1) }, icon('left'), t('pl.back'));
+  const nextLbl = h('span');
+  const nextIcon = h('span');
+  const nextBtn = h('button', { type: 'button', class: 'btn primary big', onclick: () => next() }, nextLbl, nextIcon);
+
+  const tool = (ic, label, aria, onclick, extra) => h('button', Object.assign({ type: 'button', class: 'tool', 'aria-label': aria, title: aria, onclick }, extra),
+    icon(ic), h('span', null, label));
+  const bGuides = hasGuides ? tool('guides', t('pl.guides'), t('pl.guidesAria'), () => { showConstruction = !showConstruction; store.set({ prefs: { showConstruction } }); draw(false); sync(); }, { 'aria-pressed': 'true' }) : null;
+  const bOnly = tool('onlynew', t('pl.onlyNew'), t('pl.onlyNewAria'), () => { onlyNew = !onlyNew; store.set({ prefs: { onlyNew } }); draw(false); sync(); }, { 'aria-pressed': 'false' });
+  const bReplay = tool('replay', t('pl.replay'), t('pl.replayAria'), () => draw(true));
+  const bWake = wake.supported ? tool('eye', t('pl.wake'), t('pl.wakeAria'), async () => {
+    const want = !store.get().prefs.wakeLock;
+    store.set({ prefs: { wakeLock: want } });
+    if (want) await wake.acquire(); else await wake.release();
+    sync();
+  }, { 'aria-pressed': 'false' }) : null;
+  const bCam = S.FLAGS.cameraOverlay && S.future.cameraOverlay
+    ? tool('camera', t('pl.camera'), t('pl.cameraAria'), () => S.future.cameraOverlay.open({ lesson, stepIndex: step, render })) : null;
+  const confirmBar = h('div', { class: 'confirm', hidden: true, role: 'alert' }, t('pl.restartAsk'),
+    h('button', { type: 'button', class: 'btn small primary', onclick: () => { confirmBar.hidden = true; goStep(0); } }, t('pl.yes')),
+    h('button', { type: 'button', class: 'btn small', id: 'rs-no', onclick: () => { confirmBar.hidden = true; bRestart.focus(); } }, t('set.no')));
+  const bRestart = tool('restart', t('pl.restart'), t('pl.restartAria'), () => { confirmBar.hidden = false; confirmBar.querySelector('#rs-no').focus(); });
+
+  const dlgOpen = () => !!document.querySelector('dialog[open]');
+  const sync = () => {
+    if (bGuides) bGuides.setAttribute('aria-pressed', String(showConstruction));
+    bOnly.setAttribute('aria-pressed', String(onlyNew));
+    if (bWake) bWake.setAttribute('aria-pressed', String(!!wake.lock));
+  };
+
+  const vb = lesson.viewBox.trim().split(/\s+/).map(Number);
+  const zoom = createZoom(panel, vb, () => svgNow, z => { zreset.hidden = !z; });
+
+  // Re-draw the current step. `animate` is true on step entry and Replay, false for toggles.
+  function draw(animate) {
+    cancelAnims();
+    svgNow = render(lesson, step, { showConstruction, onlyNew, highlightNew: true });
+    panel.replaceChildren(svgNow, zreset);
+    zoom.apply();
+    if (animate) animateNew(svgNow);
+  }
+  function update() {
+    const s = lesson.steps[step];
+    store.setProgress(id, { step });
+    store.set({ lastLessonId: id });
+    history.replaceState(null, '', '#/lesson/' + id + '/' + (step + 1)); // replaceState: no hashchange, no history spam
+    setTitle(tr(lesson.title));
+    segs.forEach((el, i) => { el.className = 'seg' + (i < step ? ' done' : i === step ? ' cur' : ''); });
+    stepLabel.textContent = t('pl.stepOf', { n: step + 1, total });
+    segBox.setAttribute('aria-valuenow', step + 1);
+    instr.textContent = tr(s.instruction);
+    const tp = s.tip ? tr(s.tip) : '';
+    tipEl.hidden = !tp; tipText.textContent = tp;
+    backBtn.disabled = step === 0;
+    const last = step === total - 1;
+    nextLbl.textContent = last ? t('pl.done') : t('pl.next');
+    nextIcon.replaceChildren(icon(last ? 'check' : 'right'));
+    confirmBar.hidden = true;
+    draw(true);
+  }
+  function goStep(n) { if (n < 0 || n >= total) return; step = n; update(); }
+  function next() {
+    if (step < total - 1) return goStep(step + 1);
+    finishFresh = true;
+    go('#/done/' + id);
+  }
+
+  const segBox = h('div', { class: 'segs', role: 'progressbar', 'aria-label': t('pl.progress'), 'aria-valuemin': 1, 'aria-valuemax': total, 'aria-valuenow': step + 1 }, segs);
+  const root = h('div', { class: 'player screen' },
+    h('header', { class: 'p-top' },
+      h('a', { class: 'iconbtn', href: '#/', 'aria-label': t('pl.close'), title: t('pl.close') }, icon('close')),
+      h('div', { class: 'p-title' }, titleEl, stepLabel)),
+    segBox,
+    h('div', { class: 'p-main' },
+      h('div', { class: 'p-stage' }, panel),
+      h('div', { class: 'p-side' }, instr, tipEl,
+        h('div', { class: 'tools' }, bReplay, bGuides, bOnly, bWake, bCam, bRestart),
+        confirmBar,
+        h('div', { class: 'p-nav' }, backBtn, nextBtn))));
+
+  const onKey = e => {
+    if (e.ctrlKey || e.metaKey || e.altKey || dlgOpen()) return;
+    const tg = e.target && e.target.tagName;
+    if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); goStep(step - 1); }
+    else if (e.key === 'r' || e.key === 'R') draw(true);
+    else if (e.key === 'Escape') go('#/');
+    else if (e.key === '+' || e.key === '=') zoom.zoomBy(1.25);
+    else if (e.key === '-') zoom.zoomBy(0.8);
+  };
+  const onVis = () => { if (document.visibilityState === 'visible' && store.get().prefs.wakeLock) wake.acquire(); };
+  document.addEventListener('keydown', onKey);
+  document.addEventListener('visibilitychange', onVis);
+  wake.onChange = sync;
+  setCleanup(() => {
+    cancelAnims();
+    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('visibilitychange', onVis);
+    wake.onChange = null;
+    wake.release();
+  });
+  sync();
+  if (store.get().prefs.wakeLock) wake.acquire();
+  // First draw happens once the node is in the DOM (zoom geometry needs layout); route() calls this.
+  root.afterMount = update;
+  return root;
+}
+
+/* ---------- FINISH ---------- */
+let finishFresh = false; // true only when she arrived by pressing "Done" in the player
+function screenDone(id) {
+  const lesson = lessonById(id);
+  if (!lesson) return screenNotFound();
+  setTitle(tr(lesson.title));
+  const fresh = finishFresh; finishFresh = false;
+  let marked = !fresh && !!store.progressOf(id).completedAt;
+  const idx = LESSONS.indexOf(lesson), nextL = LESSONS[idx + 1];
+
+  // celebration: a pink heart that draws itself + a few sparkles (none with reduced motion)
+  const heart = svgEl('svg', { viewBox: '0 0 24 24', class: 'heart', 'aria-hidden': 'true' });
+  const hp = svgEl('path', { d: ICONS.heart.match(/d="([^"]+)"/)[1] }); heart.append(hp);
+  const celebrate = h('div', { class: 'celebrate', 'aria-hidden': 'true' }, heart);
+  if (!reducedMotion()) {
+    [[-6, 12, 0], [96, -8, .3], [100, 60, .7], [-8, 70, 1], [50, -12, 1.2]].forEach(([l, tp, dl]) => {
+      const sp = svgEl('svg', { viewBox: '0 0 24 24', class: 'spark', style: 'left:' + l + '%;top:' + tp + '%;animation-delay:' + (dl + .4) + 's' });
+      sp.append(svgEl('path', { d: 'M12 2c.7 5 2 7.300 8 8-6 .7-7.300 3-8 8-.7-5-2-7.300-8-8 6-.7 7.300-3 8-8z' }));
+      celebrate.append(sp);
+    });
+  }
+  const markBtn = h('button', { type: 'button', class: 'btn primary big', onclick: () => {
+    if (marked) return;
+    const p = store.progressOf(id);
+    store.setProgress(id, { completedAt: new Date().toISOString(), timesDrawn: p.timesDrawn + 1 });
+    marked = true; paintMark();
+  } });
+  const paintMark = () => {
+    markBtn.className = 'btn big ' + (marked ? 'ok' : 'primary');
+    markBtn.disabled = marked;
+    markBtn.replaceChildren(...(marked ? [icon('check'), t('done.marked')] : [t('done.mark')]));
+  };
+  paintMark();
+
+  const mk = lesson.makeItYours, L = getLang();
+  const prompts = (mk && (mk[L] || mk.ro)) || [];
+  const root = h('div', { class: 'wrap screen' },
+    h('div', { class: 'done' },
+      h('div', { class: 'framebox' }, thumb(lesson, lastIndex(lesson), { finished: true, showLight: true }), celebrate),
+      h('h1', null, t('done.bravo', { title: tr(lesson.title) }), underline()),
+      h('section', { class: 'card info' }, h('h2', null, icon('pencil'), t('done.practised')), h('p', null, tr(lesson.techniqueTip))),
+      h('section', { class: 'card info' }, h('h2', null, icon('star'), t('done.makeYours')),
+        h('ul', null, prompts.map(x => h('li', null, x)))),
+      h('div', { class: 'actions' }, markBtn,
+        h('a', { class: 'btn big', href: '#/lesson/' + id + '/1' }, icon('restart'), t('done.again')),
+        nextL ? h('a', { class: 'btn big', href: '#/lesson/' + nextL.id + '/1' }, t('done.next'), icon('next')) : null,
+        h('a', { class: 'btn', href: '#/' }, icon('home'), t('done.home')))));
+  root.afterMount = () => {
+    if (reducedMotion() || !hp.animate) return;
+    const len = hp.getTotalLength();
+    hp.style.strokeDasharray = len;
+    const a = hp.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 1100, delay: 250, easing: 'ease-in-out', fill: 'backwards' });
+    a.onfinish = () => { hp.style.strokeDasharray = ''; };
+  };
+  return root;
+}
+
+function screenNotFound() {
+  setTitle('');
+  return h('div', { class: 'wrap screen' }, h('div', { class: 'card info', style: 'text-align:center;padding:30px' },
+    h('h2', null, t('nf.title')), h('p', null, h('a', { class: 'btn primary', href: '#/' }, t('nf.home')))));
+}
+
+/* ---------- #dev ---------- */
+function screenDev(setCleanup) {
+  setTitle('dev');
+  const root = h('div', { class: 'dev' });
+  let en = false, dark = false;
+  const body = h('div');
+  const paint = () => {
+    langOverride = en ? 'en' : null;
+    const rt = document.documentElement;
+    if (dark) rt.setAttribute('data-theme', 'dark'); else applyTheme();
+    body.replaceChildren();
+    const bad = REPORT.filter(r => !r.ok);
+    body.append(!REPORT.length ? h('div', { class: 'rep bad' }, t('dev.none')) :
+      bad.length ? h('div', { class: 'rep bad' }, t('dev.bad', { n: bad.length }), h('ul', null, bad.flatMap(r => r.errors.map(e => h('li', null, e))))) :
+        h('div', { class: 'rep ok' }, t('dev.allOk', { n: REPORT.length })));
+    REPORT.forEach(r => {
+      const l = r.lesson;
+      const lid = l && l.id || '?';
+      body.append(h('h2', null, lid, ' — ', l && l.title ? tr(l.title) : '', ' ', r.ok ? '' : h('span', { class: 'bad-tag' }, t('dev.invalid'))));
+      const grid = h('div', { class: 'dgrid' });
+      try {
+        l.steps.forEach((s, i) => {
+          grid.append(h('div', { class: 'dcell' }, h('span', { class: 'thumb' }, render(l, i, { highlightNew: true })),
+            h('p', null, (i + 1) + '. ' + tr(s.instruction))));
+        });
+        grid.append(h('div', { class: 'dcell' }, h('span', { class: 'thumb' }, render(l, 0, { finished: true })), h('p', null, t('dev.final'))));
+      } catch (e) { grid.append(h('p', { class: 'bad-tag' }, t('dev.cantRender') + ': ' + e.message)); }
+      body.append(grid);
+    });
+  };
+  root.append(h('div', { class: 'bar' }, h('a', { class: 'btn', href: '#/' }, t('dev.home')), h('h1', null, t('dev.title') + ' · v' + S.APP_VERSION),
+    h('label', null, h('input', { type: 'checkbox', onchange: e => { en = e.target.checked; paint(); } }), ' ' + t('dev.en')),
+    h('label', null, h('input', { type: 'checkbox', onchange: e => { dark = e.target.checked; paint(); } }), ' ' + t('dev.dark'))), body);
+  setCleanup(() => { langOverride = null; applyTheme(); });
+  paint();
+  return root;
+}
+
+/* ---------- router (CONTRACT §8) ---------- */
+let cleanup = null;
+function route(keepScroll) {
+  if (cleanup) { cleanup(); cleanup = null; }
+  const setCleanup = fn => { cleanup = fn; };
+  const hash = location.hash || '#/';
+  let m, node;
+  if ((m = /^#\/lesson\/([^/]+)\/(\d+)\/?$/.exec(hash))) node = screenPlayer(decodeURIComponent(m[1]), +m[2], setCleanup);
+  else if ((m = /^#\/lesson\/([^/]+)\/?$/.exec(hash))) node = screenPlayer(decodeURIComponent(m[1]), 1, setCleanup);
+  else if ((m = /^#\/done\/([^/]+)\/?$/.exec(hash))) node = screenDone(decodeURIComponent(m[1]));
+  else if (hash === '#dev' || hash === '#/dev') node = screenDev(setCleanup);
+  else node = screenHome();
+  const y = window.scrollY;
+  $app.replaceChildren(node);
+  if (node.afterMount) node.afterMount();
+  if (keepScroll) window.scrollTo(0, y); else { window.scrollTo(0, 0); $app.focus({ preventScroll: true }); }
+}
+rerender = () => route(true);
+window.addEventListener('hashchange', () => route(false));
+
+applyTheme();
+route(false);
+})();
+</script>
+<script src="pwa/pwa.js" defer></script>
+</body>
+</html>
